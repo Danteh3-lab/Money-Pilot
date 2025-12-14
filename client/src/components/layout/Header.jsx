@@ -7,7 +7,7 @@ const Header = ({ title = "Overzicht" }) => {
   const {
     user,
     isDarkMode,
-    toggleDarkMode,
+    setDarkMode,
     dateRange,
     setDateRange,
     clearDateRange,
@@ -59,6 +59,22 @@ const Header = ({ title = "Overzicht" }) => {
       return `${format(new Date(dateRange.start), "dd MMM")} - ${format(new Date(dateRange.end), "dd MMM")}`;
     }
     return "Alles";
+  };
+
+  const handleToggleDarkMode = async () => {
+    const next = !isDarkMode;
+
+    // Update UI immediately
+    setDarkMode(next);
+
+    // Persist per account
+    if (!user?.id) return;
+
+    try {
+      await db.updateUserSettings(user.id, { dark_mode: next });
+    } catch (error) {
+      console.error("[DarkMode] Failed to persist dark mode:", error);
+    }
   };
 
   const applyDateRange = async () => {
@@ -248,7 +264,7 @@ const Header = ({ title = "Overzicht" }) => {
       <div className="flex items-center gap-3">
         {/* Dark Mode Toggle */}
         <button
-          onClick={toggleDarkMode}
+          onClick={handleToggleDarkMode}
           className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-military-700 dark:text-military-300 border border-military-300 dark:border-military-700 rounded-md hover:bg-military-200 dark:hover:bg-military-800 transition-all"
           title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
         >

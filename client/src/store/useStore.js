@@ -193,7 +193,7 @@ const useStore = create(
     {
       name: "money-pilot-storage",
       partialize: (state) => ({
-        isDarkMode: state.isDarkMode,
+        // isDarkMode is NOT persisted in localStorage - it's stored per account in Supabase user_settings
         userSettings: state.userSettings,
         // dateRange is NOT persisted in localStorage - it's stored per account in Supabase user_settings
       }),

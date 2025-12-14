@@ -41,6 +41,7 @@ const Dashboard = () => {
     dateRange,
     setDateRange,
     clearDateRange,
+    setDarkMode,
   } = useStore();
 
   const loadDashboardData = useCallback(
@@ -69,6 +70,12 @@ const Dashboard = () => {
 
         if (settingsData) {
           setUserSettings(settingsData);
+
+          // Restore dark mode per account from user_settings
+          // Supports both snake_case and camelCase fields.
+          const darkModeValue =
+            settingsData.dark_mode ?? settingsData.darkMode ?? false;
+          setDarkMode(Boolean(darkModeValue));
         }
 
         return settingsData;
@@ -84,6 +91,7 @@ const Dashboard = () => {
       setWorkDays,
       setCategories,
       setUserSettings,
+      setDarkMode,
       setLoading,
       dateRange,
     ],
