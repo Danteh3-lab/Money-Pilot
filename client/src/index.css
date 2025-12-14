@@ -1,0 +1,162 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        font-family: "Inter", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+@layer components {
+    /* Custom scrollbar for military theme */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-military-300 dark:bg-military-700 rounded;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-military-400 dark:bg-military-600;
+    }
+
+    /* Custom Checkbox with gold accent */
+    .custom-checkbox input:checked + div {
+        @apply bg-gold-600 dark:bg-gold-500 border-gold-600 dark:border-gold-500;
+    }
+
+    .custom-checkbox input:checked + div svg {
+        @apply block;
+    }
+
+    /* Subtle grid pattern for chart background */
+    .bg-grid-pattern {
+        background-image:
+            linear-gradient(to right, #e8ede7 1px, transparent 1px),
+            linear-gradient(to bottom, #e8ede7 1px, transparent 1px);
+        background-size: 40px 40px;
+    }
+
+    /* Slide-up animation for notifications */
+    @keyframes slide-up {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .animate-slide-up {
+        animation: slide-up 0.3s ease-out;
+    }
+
+    .dark .bg-grid-pattern {
+        background-image:
+            linear-gradient(to right, #2f402e 1px, transparent 1px),
+            linear-gradient(to bottom, #2f402e 1px, transparent 1px);
+    }
+
+    /* Transitions for dark mode */
+    * {
+        @apply transition-colors duration-200;
+    }
+
+    /* Dark mode root styles */
+    .dark {
+        color-scheme: dark;
+    }
+
+    /* Gold gradient backgrounds */
+    .bg-gold-gradient {
+        background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+    }
+
+    .bg-military-gradient {
+        background: linear-gradient(135deg, #476343 0%, #243327 100%);
+    }
+
+    /* Selection colors */
+    ::selection {
+        @apply bg-gold-500 text-military-950;
+    }
+
+    .dark ::selection {
+        @apply bg-gold-600 text-white;
+    }
+}
+
+/* Loading spinner */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Slide in from left */
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.animate-slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+/* Gold shimmer effect */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.shimmer {
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(234, 179, 8, 0.2) 50%,
+        transparent 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
