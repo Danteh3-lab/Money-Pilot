@@ -6,6 +6,24 @@ import ExpensesChart from "../components/dashboard/ExpensesChart";
 import QuickAddTransaction from "../components/dashboard/QuickAddTransaction";
 import TransactionsTable from "../components/dashboard/TransactionsTable";
 
+const normalizeTransactionType = (type) => {
+  if (!type) return type;
+  const t = String(type).toLowerCase().trim();
+
+  // Normalize Dutch/EN variants to store's expected values:
+  // - "income" | "expense"
+  if (t === "inkomen" || t === "income") return "income";
+  if (t === "uitgave" || t === "expense") return "expense";
+
+  return t;
+};
+
+const normalizeTransactions = (rows) =>
+  (rows || []).map((t) => ({
+    ...t,
+    type: normalizeTransactionType(t.type),
+  }));
+
 const Dashboard = () => {
   const {
     user,
@@ -34,7 +52,7 @@ const Dashboard = () => {
           db.getUserSettings(user.id),
         ]);
 
-      setTransactions(transactionsData || []);
+      setTransactions(normalizeTransactions(transactionsData));
       setWorkDays(workDaysData || []);
       setCategories(categoriesData || []);
 

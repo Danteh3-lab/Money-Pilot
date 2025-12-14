@@ -1,16 +1,31 @@
 import { useState } from "react";
 import useStore from "../../store/useStore";
 import { format } from "date-fns";
+import { auth } from "../../lib/supabase";
 
 const Header = ({ title = "Overzicht" }) => {
-  const { isDarkMode, toggleDarkMode, dateRange } = useStore();
+  const { isDarkMode, toggleDarkMode, dateRange, clearUser } = useStore();
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const formatDateRange = () => {
     if (dateRange.start && dateRange.end) {
       return `${format(new Date(dateRange.start), "dd MMM")} - ${format(new Date(dateRange.end), "dd MMM")}`;
     }
     return "15 Okt - 15 Nov";
+  };
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await auth.signOut();
+      clearUser();
+      // Router will likely handle redirect based on user state
+    } catch (error) {
+      console.error("Error logging out:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -70,6 +85,16 @@ const Header = ({ title = "Overzicht" }) => {
             width="14"
           />
           {isDarkMode ? "Light" : "Dark"}
+        </button>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-military-700 dark:text-military-300 border border-military-300 dark:border-military-700 rounded-md hover:bg-military-200 dark:hover:bg-military-800 transition-all disabled:opacity-50"
+        >
+          <iconify-icon icon="lucide:log-out" width="14" />
+          {isLoggingOut ? "..." : "Logout"}
         </button>
 
         {/* Export Button */}
