@@ -167,7 +167,8 @@ export const db = {
   async updateUserSettings(userId, settings) {
     const { data, error } = await supabase
       .from("user_settings")
-      .upsert({ user_id: userId, ...settings })
+      // IMPORTANT: specify conflict target so PostgREST can upsert on user_id
+      .upsert({ user_id: userId, ...settings }, { onConflict: "user_id" })
       .select()
       .single();
 

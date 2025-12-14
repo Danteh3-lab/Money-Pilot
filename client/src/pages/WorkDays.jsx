@@ -14,7 +14,7 @@ import useStore from "../store/useStore";
 import { db } from "../lib/supabase";
 
 const WorkDays = () => {
-  const { user, userSettings } = useStore();
+  const { user, userSettings, dateRange } = useStore();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [workDays, setWorkDays] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +32,7 @@ const WorkDays = () => {
     if (user) {
       loadWorkDays();
     }
-  }, [user, currentMonth]);
+  }, [user, currentMonth, dateRange?.start, dateRange?.end]);
 
   useEffect(() => {
     if (user && !isLoading && workDays.length >= 0) {
@@ -43,18 +43,23 @@ const WorkDays = () => {
   const loadWorkDays = async () => {
     setIsLoading(true);
     try {
-      const start = startOfMonth(currentMonth);
-      const end = endOfMonth(currentMonth);
+      // If global dateRange is set, use it; otherwise fall back to currentMonth
+      const filter = {};
 
-      const days = await db.getWorkDays(user.id);
+      if (dateRange?.start && dateRange?.end) {
+        // Use global Overzicht date range (server-side filter)
+        filter.startDate = new Date(dateRange.start).toISOString();
+        filter.endDate = new Date(dateRange.end).toISOString();
+      } else {
+        // Fall back to current month view
+        const start = startOfMonth(currentMonth);
+        const end = endOfMonth(currentMonth);
+        filter.startDate = start.toISOString();
+        filter.endDate = end.toISOString();
+      }
 
-      // Filter for current month
-      const monthDays = (days || []).filter((wd) => {
-        const wdDate = parseISO(wd.date);
-        return wdDate >= start && wdDate <= end;
-      });
-
-      setWorkDays(monthDays);
+      const days = await db.getWorkDays(user.id, filter);
+      setWorkDays(days || []);
     } catch (error) {
       console.error("Error loading work days:", error);
     } finally {
@@ -154,12 +159,28 @@ const WorkDays = () => {
 
     setIsGenerating(true);
     try {
-      const start = startOfMonth(currentMonth);
-      const end = endOfMonth(currentMonth);
+      const today = new Date();
+      let start, end;
+
+      // If global dateRange is set (Overzicht), use it; otherwise use currentMonth
+      if (dateRange?.start && dateRange?.end) {
+        start = new Date(dateRange.start);
+        end = new Date(dateRange.end);
+        // Still cap at today if dateRange.end is in the future
+        if (end > today) {
+          end = today;
+        }
+      } else {
+        start = startOfMonth(currentMonth);
+        const monthEnd = endOfMonth(currentMonth);
+        // Only fill up to today, not future dates
+        end = monthEnd < today ? monthEnd : today;
+      }
+
       const allDays = eachDayOfInterval({ start, end });
 
-      // Filter only weekdays (Monday-Friday)
-      const weekdays = allDays.filter((day) => !isWeekend(day));
+      // Filter only weekdays (Monday-Friday) that are not in the future
+      const weekdays = allDays.filter((day) => !isWeekend(day) && day <= today);
 
       // Check which days don't exist yet
       const newWorkDays = [];
@@ -184,7 +205,9 @@ const WorkDays = () => {
         setWorkDays((prev) => [...prev, ...newWorkDays]);
         alert(`${newWorkDays.length} werkdagen toegevoegd!`);
       } else {
-        alert("Alle werkdagen zijn al toegevoegd voor deze maand.");
+        const periodLabel =
+          dateRange?.start && dateRange?.end ? "deze periode" : "deze maand";
+        alert(`Alle werkdagen zijn al toegevoegd voor ${periodLabel}.`);
       }
     } catch (error) {
       console.error("Error auto-generating work days:", error);
@@ -294,19 +317,26 @@ const WorkDays = () => {
   };
 
   const calculateMonthlyStats = () => {
-    const monthWorkDays = workDays.filter((wd) => {
+    const hasRange = Boolean(dateRange?.start && dateRange?.end);
+
+    const rangeStart = hasRange
+      ? new Date(dateRange.start)
+      : startOfMonth(currentMonth);
+    const rangeEnd = hasRange
+      ? new Date(dateRange.end)
+      : endOfMonth(currentMonth);
+
+    const periodWorkDays = workDays.filter((wd) => {
       const wdDate = parseISO(wd.date);
-      return (
-        wdDate >= startOfMonth(currentMonth) &&
-        wdDate <= endOfMonth(currentMonth)
-      );
+      return wdDate >= rangeStart && wdDate <= rangeEnd;
     });
 
-    const totalHours = monthWorkDays.reduce(
+    const totalHours = periodWorkDays.reduce(
       (sum, wd) => sum + parseFloat(wd.hours_worked || 0),
       0,
     );
-    const totalEarnings = monthWorkDays.reduce((sum, wd) => {
+
+    const totalEarnings = periodWorkDays.reduce((sum, wd) => {
       const hours = parseFloat(wd.hours_worked || 0);
       const rate = parseFloat(wd.daily_rate || 0);
       const dailyHours = parseFloat(userSettings?.default_hours || 40) / 5; // Convert weekly to daily
@@ -314,7 +344,7 @@ const WorkDays = () => {
     }, 0);
 
     return {
-      daysWorked: monthWorkDays.length,
+      daysWorked: periodWorkDays.length,
       totalHours: totalHours.toFixed(1),
       totalEarnings: totalEarnings.toFixed(2),
     };

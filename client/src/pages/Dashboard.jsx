@@ -38,46 +38,88 @@ const Dashboard = () => {
     getEstimatedSalary,
     getTotalExpenses,
     getBalance,
+    dateRange,
+    setDateRange,
+    clearDateRange,
   } = useStore();
 
-  const loadDashboardData = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Load all data in parallel
-      const [transactionsData, workDaysData, categoriesData, settingsData] =
-        await Promise.all([
-          db.getTransactions(user.id),
-          db.getWorkDays(user.id),
-          db.getCategories(user.id),
-          db.getUserSettings(user.id),
-        ]);
+  const loadDashboardData = useCallback(
+    async (skipSettingsLoad = false) => {
+      setLoading(true);
+      try {
+        // Build filter for server-side date range filtering
+        const filter = {};
+        if (dateRange?.start && dateRange?.end) {
+          filter.startDate = new Date(dateRange.start).toISOString();
+          filter.endDate = new Date(dateRange.end).toISOString();
+        }
 
-      setTransactions(normalizeTransactions(transactionsData));
-      setWorkDays(workDaysData || []);
-      setCategories(categoriesData || []);
+        // Load all data in parallel
+        const [transactionsData, workDaysData, categoriesData, settingsData] =
+          await Promise.all([
+            db.getTransactions(user.id, filter),
+            db.getWorkDays(user.id, filter),
+            db.getCategories(user.id),
+            skipSettingsLoad ? null : db.getUserSettings(user.id),
+          ]);
 
-      if (settingsData) {
-        setUserSettings(settingsData);
+        setTransactions(normalizeTransactions(transactionsData));
+        setWorkDays(workDaysData || []);
+        setCategories(categoriesData || []);
+
+        if (settingsData) {
+          setUserSettings(settingsData);
+        }
+
+        return settingsData;
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    user,
-    setTransactions,
-    setWorkDays,
-    setCategories,
-    setUserSettings,
-    setLoading,
-  ]);
+    },
+    [
+      user,
+      setTransactions,
+      setWorkDays,
+      setCategories,
+      setUserSettings,
+      setLoading,
+      dateRange,
+    ],
+  );
 
   useEffect(() => {
-    if (user) {
-      loadDashboardData();
+    const initDashboard = async () => {
+      if (!user) return;
+
+      // First load: get settings and restore dateRange if saved (always check Supabase, not store)
+      const settings = await loadDashboardData(false);
+
+      const start = settings?.overview_start_date;
+      const end = settings?.overview_end_date;
+
+      if (start && end) {
+        // Always restore from Supabase (single source of truth for date range per account)
+        setDateRange(
+          new Date(`${start}T00:00:00`),
+          new Date(`${end}T23:59:59`),
+        );
+      } else {
+        // User has no saved range - clear it
+        clearDateRange();
+      }
+    };
+
+    initDashboard();
+  }, [user]);
+
+  // Reload data when date range changes (but don't persist here - Header does that)
+  useEffect(() => {
+    if (user && (dateRange?.start || dateRange?.end)) {
+      loadDashboardData(true); // Skip settings reload to avoid loop
     }
-  }, [user, loadDashboardData]);
+  }, [dateRange?.start, dateRange?.end, user, loadDashboardData]);
 
   const estimatedSalary = getEstimatedSalary();
   const totalExpenses = getTotalExpenses();

@@ -156,9 +156,38 @@ const useStore = create(
 
       getEstimatedSalary: () => {
         const state = get();
-        const workDaysCount = state.workDays.length;
-        const dailyRate = state.userSettings.dailyRate;
-        return workDaysCount * dailyRate;
+
+        // Estimate salary based on actual work day entries (so it matches "Totaal Verdiend")
+        // Supports both snake_case and camelCase fields.
+        const defaultDailyRate =
+          state.userSettings.dailyRate ??
+          state.userSettings.daily_rate ??
+          state.settings?.dailyRate ??
+          state.settings?.daily_rate ??
+          0;
+
+        const defaultDailyHours =
+          (state.userSettings.default_hours ??
+            state.userSettings.defaultHours ??
+            state.settings?.default_hours ??
+            state.settings?.defaultHours ??
+            40) / 5;
+
+        const total = (state.workDays || []).reduce((sum, wd) => {
+          const hours = parseFloat(wd.hours_worked ?? wd.hoursWorked ?? 0) || 0;
+
+          const rate =
+            parseFloat(wd.daily_rate ?? wd.dailyRate ?? defaultDailyRate) || 0;
+
+          // If you tracked hours, pay scales with hours vs default daily hours.
+          // If hours is 0 (or missing), count it as a full day.
+          const multiplier =
+            hours > 0 && defaultDailyHours > 0 ? hours / defaultDailyHours : 1;
+
+          return sum + rate * multiplier;
+        }, 0);
+
+        return total;
       },
     }),
     {
@@ -166,7 +195,7 @@ const useStore = create(
       partialize: (state) => ({
         isDarkMode: state.isDarkMode,
         userSettings: state.userSettings,
-        dateRange: state.dateRange,
+        // dateRange is NOT persisted in localStorage - it's stored per account in Supabase user_settings
       }),
     },
   ),

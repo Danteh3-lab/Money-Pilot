@@ -14,7 +14,9 @@ import {
   subDays,
   eachDayOfInterval,
   startOfDay,
+  endOfDay,
   isSameDay,
+  isValid,
 } from "date-fns";
 import { nl } from "date-fns/locale";
 import useStore from "../../store/useStore";
@@ -36,39 +38,55 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 const ExpensesChart = () => {
-  const { transactions, isDarkMode } = useStore();
+  const { transactions, isDarkMode, dateRange } = useStore();
   const [view, setView] = useState("week"); // 'week' | 'month'
 
   const data = useMemo(() => {
-    const today = startOfDay(new Date());
-    // Week: last 7 days. Month: last 30 days.
-    const startDate = view === "week" ? subDays(today, 6) : subDays(today, 29);
+    // If global date range is set (Overzicht picker), use that; otherwise fallback to week/month presets.
+    const hasGlobalRange = Boolean(dateRange?.start && dateRange?.end);
+
+    const todayStart = startOfDay(new Date());
+    const fallbackStart =
+      view === "week" ? subDays(todayStart, 6) : subDays(todayStart, 29);
+    const rangeStart = hasGlobalRange
+      ? startOfDay(new Date(dateRange.start))
+      : fallbackStart;
+    const rangeEnd = hasGlobalRange
+      ? endOfDay(new Date(dateRange.end))
+      : endOfDay(new Date());
 
     // Generate all dates in the interval to ensure we have entries for days with 0 expenses
-    const dates = eachDayOfInterval({ start: startDate, end: today });
+    const dates = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
 
     const expenseTransactions = transactions.filter(
       (t) => t.type === "expense",
     );
 
     return dates.map((date) => {
-      // Sum expenses for this specific date
+      // Sum expenses for this specific date (guard against invalid/missing dates)
       const dayExpenses = expenseTransactions
-        .filter((t) => isSameDay(parseISO(t.date), date))
+        .filter((t) => {
+          if (!t?.date) return false;
+          const parsed = parseISO(t.date);
+          if (!isValid(parsed)) return false;
+          return isSameDay(parsed, date);
+        })
         .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+      const label = hasGlobalRange
+        ? format(date, "dd/MM", { locale: nl })
+        : view === "week"
+          ? format(date, "EE", { locale: nl })
+          : format(date, "d");
 
       return {
         date: date.toISOString(),
-        // For week view: 'ma', 'di'. For month view: '1', '2', etc.
-        label:
-          view === "week"
-            ? format(date, "EE", { locale: nl })
-            : format(date, "d"),
+        label,
         amount: parseFloat(dayExpenses.toFixed(2)),
         fullDate: format(date, "d MMMM yyyy", { locale: nl }),
       };
     });
-  }, [transactions, view]);
+  }, [transactions, view, dateRange]);
 
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm p-6 min-h-[300px] flex flex-col animate-fade-in">
@@ -101,54 +119,71 @@ const ExpensesChart = () => {
       </div>
 
       <div className="flex-1 w-full min-h-[200px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke={isDarkMode ? "#27272a" : "#f4f4f5"}
-            />
-            <XAxis
-              dataKey="label"
-              axisLine={false}
-              tickLine={false}
-              tick={{
-                fill: isDarkMode ? "#71717a" : "#a1a1aa",
-                fontSize: 10,
-                fontWeight: 500,
-              }}
-              dy={10}
-              interval={view === "month" ? 2 : 0} // Skip some labels in month view
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{
-                fill: isDarkMode ? "#71717a" : "#a1a1aa",
-                fontSize: 10,
-                fontWeight: 500,
-              }}
-              tickFormatter={(value) => `${value}`}
-            />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{
-                fill: isDarkMode ? "#27272a" : "#f4f4f5",
-                opacity: 0.4,
-              }}
-            />
-            <Bar
-              dataKey="amount"
-              fill={isDarkMode ? "#52525b" : "#e4e4e7"}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={view === "week" ? 40 : 12}
-              activeBar={{ fill: isDarkMode ? "#f4f4f5" : "#18181b" }}
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        {data.every((d) => d.amount === 0) ? (
+          <div className="flex items-center justify-center h-full text-zinc-400 dark:text-zinc-600">
+            <div className="text-center">
+              <iconify-icon
+                icon="lucide:bar-chart-3"
+                width="48"
+                className="mb-2 opacity-50"
+              />
+              <p className="text-sm">Geen uitgaven in deze periode</p>
+              <p className="text-xs mt-1 text-zinc-400 dark:text-zinc-600">
+                Pas eventueel je Overzicht-datums aan of voeg een uitgave toe
+                binnen dit bereik.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke={isDarkMode ? "#27272a" : "#f4f4f5"}
+              />
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tick={{
+                  fill: isDarkMode ? "#71717a" : "#a1a1aa",
+                  fontSize: 10,
+                  fontWeight: 500,
+                }}
+                dy={10}
+                interval={view === "month" ? 2 : 0} // Skip some labels in month view
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{
+                  fill: isDarkMode ? "#71717a" : "#a1a1aa",
+                  fontSize: 10,
+                  fontWeight: 500,
+                }}
+                tickFormatter={(value) => `${value}`}
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{
+                  fill: isDarkMode ? "#27272a" : "#f4f4f5",
+                  opacity: 0.4,
+                }}
+              />
+              <Bar
+                dataKey="amount"
+                fill={isDarkMode ? "#52525b" : "#e4e4e7"}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={view === "week" ? 40 : 12}
+                activeBar={{ fill: isDarkMode ? "#f4f4f5" : "#18181b" }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

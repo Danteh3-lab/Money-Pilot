@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,25 +14,62 @@ import SetupRequired from "./pages/SetupRequired";
 import WorkDays from "./pages/WorkDays";
 import Settings from "./pages/Settings";
 
+// Placeholder component for unimplemented pages
+const ComingSoon = ({ title }) => (
+  <div className="flex items-center justify-center h-full">
+    <div className="text-center animate-fade-in">
+      <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <iconify-icon
+          icon="lucide:construction"
+          width="32"
+          className="text-zinc-400 dark:text-zinc-600"
+        />
+      </div>
+      <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
+        {title}
+      </h2>
+      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        Deze pagina is nog in ontwikkeling
+      </p>
+    </div>
+  </div>
+);
+
 function App() {
   const { user, setUser, clearUser, setLoading } = useStore();
 
-  // Check if Supabase is configured
-  const isSupabaseConfigured = supabase !== null;
+  // Check if Supabase is configured (must NOT cause conditional hook calls)
+  const isSupabaseConfigured = useMemo(() => supabase !== null, []);
 
-  // If not configured, show setup page
-  if (!isSupabaseConfigured) {
-    return <SetupRequired />;
-  }
+  const checkUser = useCallback(async () => {
+    try {
+      const currentUser = await auth.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        clearUser();
+      }
+    } catch (error) {
+      console.error("Error checking user:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [setUser, clearUser, setLoading]);
 
   useEffect(() => {
-    // Check for existing session
+    // If Supabase isn't configured, don't attempt auth/session work.
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
+    // Check for existing session on app start / refresh
     checkUser();
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = auth.onAuthStateChange((_event, session) => {
+    } = auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUser(session.user);
       } else {
@@ -43,20 +80,12 @@ function App() {
     return () => {
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [isSupabaseConfigured, checkUser, setLoading, setUser, clearUser]);
 
-  const checkUser = async () => {
-    try {
-      const currentUser = await auth.getCurrentUser();
-      if (currentUser) {
-        setUser(currentUser);
-      }
-    } catch (error) {
-      console.error("Error checking user:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Render setup page if not configured (AFTER hooks run)
+  if (!isSupabaseConfigured) {
+    return <SetupRequired />;
+  }
 
   return (
     <Router>
@@ -90,26 +119,5 @@ function App() {
     </Router>
   );
 }
-
-// Placeholder component for unimplemented pages
-const ComingSoon = ({ title }) => (
-  <div className="flex items-center justify-center h-full">
-    <div className="text-center animate-fade-in">
-      <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <iconify-icon
-          icon="lucide:construction"
-          width="32"
-          className="text-zinc-400 dark:text-zinc-600"
-        />
-      </div>
-      <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
-        {title}
-      </h2>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        Deze pagina is nog in ontwikkeling
-      </p>
-    </div>
-  </div>
-);
 
 export default App;
