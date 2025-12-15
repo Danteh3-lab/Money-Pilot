@@ -42,18 +42,21 @@ const ExpensesChart = () => {
   const [view, setView] = useState("week"); // 'week' | 'month'
 
   const data = useMemo(() => {
-    // If global date range is set (Overzicht picker), use that; otherwise fallback to week/month presets.
+    // Week/Month should control the range.
+    // If a global date range (Overzicht picker) exists, we "anchor" to its end date,
+    // but still show only the last 7/30 days depending on the view.
     const hasGlobalRange = Boolean(dateRange?.start && dateRange?.end);
 
-    const todayStart = startOfDay(new Date());
-    const fallbackStart =
-      view === "week" ? subDays(todayStart, 6) : subDays(todayStart, 29);
-    const rangeStart = hasGlobalRange
-      ? startOfDay(new Date(dateRange.start))
-      : fallbackStart;
-    const rangeEnd = hasGlobalRange
+    const anchorEnd = hasGlobalRange
       ? endOfDay(new Date(dateRange.end))
       : endOfDay(new Date());
+
+    const rangeStart =
+      view === "week"
+        ? startOfDay(subDays(anchorEnd, 6))
+        : startOfDay(subDays(anchorEnd, 29));
+
+    const rangeEnd = anchorEnd;
 
     // Generate all dates in the interval to ensure we have entries for days with 0 expenses
     const dates = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
@@ -73,9 +76,11 @@ const ExpensesChart = () => {
         })
         .reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
-      const label = hasGlobalRange
-        ? format(date, "dd/MM", { locale: nl })
-        : view === "week"
+      // Labels:
+      // - Week: weekday name (Mon/Tue in NL)
+      // - Month: day-of-month number
+      const label =
+        view === "week"
           ? format(date, "EE", { locale: nl })
           : format(date, "d");
 
@@ -135,54 +140,56 @@ const ExpensesChart = () => {
             </div>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke={isDarkMode ? "#27272a" : "#f4f4f5"}
-              />
-              <XAxis
-                dataKey="label"
-                axisLine={false}
-                tickLine={false}
-                tick={{
-                  fill: isDarkMode ? "#71717a" : "#a1a1aa",
-                  fontSize: 10,
-                  fontWeight: 500,
-                }}
-                dy={10}
-                interval={view === "month" ? 2 : 0} // Skip some labels in month view
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{
-                  fill: isDarkMode ? "#71717a" : "#a1a1aa",
-                  fontSize: 10,
-                  fontWeight: 500,
-                }}
-                tickFormatter={(value) => `${value}`}
-              />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{
-                  fill: isDarkMode ? "#27272a" : "#f4f4f5",
-                  opacity: 0.4,
-                }}
-              />
-              <Bar
-                dataKey="amount"
-                fill={isDarkMode ? "#52525b" : "#e4e4e7"}
-                radius={[4, 4, 0, 0]}
-                maxBarSize={view === "week" ? 40 : 12}
-                activeBar={{ fill: isDarkMode ? "#f4f4f5" : "#18181b" }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={data}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke={isDarkMode ? "#27272a" : "#f4f4f5"}
+                />
+                <XAxis
+                  dataKey="label"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{
+                    fill: isDarkMode ? "#71717a" : "#a1a1aa",
+                    fontSize: 10,
+                    fontWeight: 500,
+                  }}
+                  dy={10}
+                  interval={data.length > 10 ? "preserveStartEnd" : 0}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{
+                    fill: isDarkMode ? "#71717a" : "#a1a1aa",
+                    fontSize: 10,
+                    fontWeight: 500,
+                  }}
+                  tickFormatter={(value) => `${value}`}
+                />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{
+                    fill: isDarkMode ? "#27272a" : "#f4f4f5",
+                    opacity: 0.4,
+                  }}
+                />
+                <Bar
+                  dataKey="amount"
+                  fill={isDarkMode ? "#52525b" : "#e4e4e7"}
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={view === "week" ? 40 : 12}
+                  activeBar={{ fill: isDarkMode ? "#f4f4e7" : "#18181b" }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </div>
     </div>
