@@ -83,6 +83,31 @@ const useStore = create(
       },
       setDateRange: (start, end) => set({ dateRange: { start, end } }),
       clearDateRange: () => set({ dateRange: { start: null, end: null } }),
+      
+      // Persist date range to database
+      persistDateRange: async (start, end) => {
+        const state = get();
+        
+        // Update local state first
+        set({ dateRange: { start, end } });
+        
+        // If no user, just update local state
+        if (!state.user) return;
+        
+        // Import db dynamically to avoid circular dependencies
+        const { db } = await import('../lib/supabase');
+        
+        try {
+          // Persist to database
+          await db.updateUserSettings(state.user.id, {
+            overview_start_date: start ? start.toISOString().split('T')[0] : null,
+            overview_end_date: end ? end.toISOString().split('T')[0] : null,
+          });
+        } catch (error) {
+          console.error('Error persisting date range:', error);
+          throw error;
+        }
+      },
 
       // Selected transactions (for bulk actions)
       selectedTransactions: [],

@@ -11,6 +11,7 @@ const Header = ({ title = "Overzicht" }) => {
     setDarkMode,
     dateRange,
     setDateRange,
+    persistDateRange,
     clearDateRange,
     clearUser,
   } = useStore();
@@ -93,45 +94,19 @@ const Header = ({ title = "Overzicht" }) => {
     const s = start <= end ? start : end;
     const e = start <= end ? end : start;
 
-    // Update UI immediately
-    setDateRange(s, e);
-
-    // Persist per account (DATE fields)
+    // Persist date range to database
     if (!user?.id) {
       console.warn("[Overzicht] Cannot save date range: no user is logged in");
+      setDateRange(s, e);
     } else {
-      const overview_start_date = toDateOnlyString(s);
-      const overview_end_date = toDateOnlyString(e);
-
-      console.log("[Overzicht] Saving date range to Supabase user_settings:", {
-        user_id: user.id,
-        overview_start_date,
-        overview_end_date,
-      });
-
-      if (overview_start_date && overview_end_date) {
-        try {
-          setIsSavingOverview(true);
-          const saved = await db.updateUserSettings(user.id, {
-            overview_start_date,
-            overview_end_date,
-          });
-          console.log(
-            "[Overzicht] Save success. Returned user_settings row:",
-            saved,
-          );
-        } catch (error) {
-          console.error("[Overzicht] Save FAILED:", error);
-        } finally {
-          setIsSavingOverview(false);
-        }
-      } else {
-        console.warn("[Overzicht] Not saving: invalid date conversion", {
-          draftStart,
-          draftEnd,
-          overview_start_date,
-          overview_end_date,
-        });
+      try {
+        setIsSavingOverview(true);
+        await persistDateRange(s, e);
+        console.log("[Overzicht] Date range saved successfully");
+      } catch (error) {
+        console.error("[Overzicht] Save FAILED:", error);
+      } finally {
+        setIsSavingOverview(false);
       }
     }
 
