@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const SetupRequired = () => {
-  const [showInstructions, setShowInstructions] = useState(true);
+  const [_showInstructions, _setShowInstructions] = useState(true);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 flex items-center justify-center p-4">
@@ -38,7 +38,8 @@ const SetupRequired = () => {
                   Environment Variables Missing
                 </h3>
                 <p className="text-sm text-amber-800 dark:text-amber-300">
-                  Your Supabase configuration is not set up yet. Follow the steps below to get started.
+                  Your Supabase configuration is not set up yet. Follow the
+                  steps below to get started.
                 </p>
               </div>
             </div>
@@ -57,7 +58,17 @@ const SetupRequired = () => {
               </div>
               <div className="ml-11">
                 <ol className="list-decimal list-inside space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  <li>Go to <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">supabase.com</a></li>
+                  <li>
+                    Go to{" "}
+                    <a
+                      href="https://supabase.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      supabase.com
+                    </a>
+                  </li>
                   <li>Click "Start your project" and sign up/log in</li>
                   <li>Create a new project (choose a name and password)</li>
                   <li>Wait ~2 minutes for setup to complete</li>
@@ -78,7 +89,12 @@ const SetupRequired = () => {
                 <ol className="list-decimal list-inside space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
                   <li>In your Supabase dashboard, click "SQL Editor"</li>
                   <li>Click "New query"</li>
-                  <li>Open the file <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">supabase/schema.sql</code></li>
+                  <li>
+                    Open the file{" "}
+                    <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">
+                      supabase/schema.sql
+                    </code>
+                  </li>
                   <li>Copy all the SQL code and paste it into the editor</li>
                   <li>Click "Run" to create all tables</li>
                 </ol>
@@ -97,8 +113,13 @@ const SetupRequired = () => {
               <div className="ml-11">
                 <ol className="list-decimal list-inside space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
                   <li>In Supabase, go to Settings → API</li>
-                  <li>Copy your <strong>Project URL</strong></li>
-                  <li>Copy your <strong>anon/public</strong> key (NOT service_role)</li>
+                  <li>
+                    Copy your <strong>Project URL</strong>
+                  </li>
+                  <li>
+                    Copy your <strong>anon/public</strong> key (NOT
+                    service_role)
+                  </li>
                 </ol>
               </div>
             </div>
@@ -114,12 +135,20 @@ const SetupRequired = () => {
               </div>
               <div className="ml-11 space-y-3">
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Create a <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">.env</code> file in the <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">client</code> directory:
+                  Create a{" "}
+                  <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">
+                    .env
+                  </code>{" "}
+                  file in the{" "}
+                  <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">
+                    client
+                  </code>{" "}
+                  directory:
                 </p>
                 <div className="bg-zinc-900 dark:bg-zinc-950 rounded-lg p-4 font-mono text-xs text-zinc-300 overflow-x-auto">
                   <pre>
-VITE_SUPABASE_URL=your_project_url_here{"\n"}
-VITE_SUPABASE_ANON_KEY=your_anon_key_here
+                    VITE_SUPABASE_URL=your_project_url_here{"\n"}
+                    VITE_SUPABASE_ANON_KEY=your_anon_key_here
                   </pre>
                 </div>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
@@ -140,7 +169,13 @@ VITE_SUPABASE_ANON_KEY=your_anon_key_here
               <div className="ml-11">
                 <ol className="list-decimal list-inside space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
                   <li>Stop the current server (Ctrl+C)</li>
-                  <li>Run <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">npm run dev</code> again</li>
+                  <li>
+                    Run{" "}
+                    <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">
+                      npm run dev
+                    </code>{" "}
+                    again
+                  </li>
                   <li>Refresh this page</li>
                   <li>You're all set! 🎉</li>
                 </ol>
@@ -177,7 +212,8 @@ VITE_SUPABASE_ANON_KEY=your_anon_key_here
         {/* Footer */}
         <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">
           <p>
-            Once configured, you'll be able to create an account and start tracking your finances.
+            Once configured, you'll be able to create an account and start
+            tracking your finances.
           </p>
         </div>
       </div>

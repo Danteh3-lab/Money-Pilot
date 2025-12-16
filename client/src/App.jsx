@@ -9,6 +9,7 @@ import { auth, supabase } from "./lib/supabase";
 import useStore from "./store/useStore";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
+import Transactions from "./pages/Transactions";
 import Auth from "./pages/Auth";
 import SetupRequired from "./pages/SetupRequired";
 import WorkDays from "./pages/WorkDays";
@@ -99,10 +100,7 @@ function App() {
         {/* Protected Routes */}
         <Route element={user ? <Layout /> : <Navigate to="/auth" replace />}>
           <Route path="/" element={<Dashboard />} />
-          <Route
-            path="/transactions"
-            element={<ComingSoon title="Transacties" />}
-          />
+          <Route path="/transactions" element={<Transactions />} />
           <Route path="/analytics" element={<ComingSoon title="Analytics" />} />
           <Route path="/periods" element={<ComingSoon title="Periodes" />} />
           <Route path="/workdays" element={<WorkDays />} />

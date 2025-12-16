@@ -3,7 +3,7 @@ import useStore from "../store/useStore";
 import { db } from "../lib/supabase";
 
 const Settings = () => {
-  const { user, userSettings, setUserSettings } = useStore();
+  const { user, setUserSettings } = useStore();
   const [formData, setFormData] = useState({
     daily_rate: 89.95,
     default_hours: 40.0,
@@ -19,6 +19,7 @@ const Settings = () => {
 
   useEffect(() => {
     loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadSettings = async () => {
@@ -110,16 +111,16 @@ const Settings = () => {
     setIsSaving(true);
     setSaveMessage(null);
 
-    try {
-      const settingsToSave = {
-        daily_rate: parseFloat(formData.daily_rate),
-        default_hours: parseFloat(formData.default_hours),
-        currency: formData.currency,
-        date_format: formData.date_format,
-        dark_mode: formData.dark_mode,
-        language: formData.language,
-      };
+    const settingsToSave = {
+      daily_rate: parseFloat(formData.daily_rate),
+      default_hours: parseFloat(formData.default_hours),
+      currency: formData.currency,
+      date_format: formData.date_format,
+      dark_mode: formData.dark_mode,
+      language: formData.language,
+    };
 
+    try {
       await db.updateUserSettings(user.id, settingsToSave);
       setUserSettings(settingsToSave);
 

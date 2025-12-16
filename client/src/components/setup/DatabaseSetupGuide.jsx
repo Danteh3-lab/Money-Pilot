@@ -1,45 +1,46 @@
-import { useState, useEffect } from 'react'
-import { setupCheck } from '../../lib/setupCheck'
+import { useState, useEffect } from "react";
+import { setupCheck } from "../../lib/setupCheck";
 
 const DatabaseSetupGuide = ({ onClose, onRetry }) => {
-  const [report, setReport] = useState(null)
-  const [isChecking, setIsChecking] = useState(true)
-  const [copied, setCopied] = useState(false)
-
-  useEffect(() => {
-    checkSetup()
-  }, [])
+  const [report, setReport] = useState(null);
+  const [isChecking, setIsChecking] = useState(true);
 
   const checkSetup = async () => {
-    setIsChecking(true)
-    const result = await setupCheck.runAllChecks()
-    setReport(result)
-    setIsChecking(false)
-  }
+    setIsChecking(true);
+    const result = await setupCheck.runAllChecks();
+    setReport(result);
+    setIsChecking(false);
+  };
 
-  const copySchemaToClipboard = () => {
-    const schemaUrl = `https://supabase.com/dashboard/project/scocvdumlbslqzduvelr/sql/new`
-    navigator.clipboard.writeText(schemaUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  useEffect(() => {
+    checkSetup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const _copySchemaToClipboard = () => {
+    const schemaUrl = `https://supabase.com/dashboard/project/scocvdumlbslqzduvelr/sql/new`;
+    navigator.clipboard.writeText(schemaUrl);
+    // Future: add UI feedback for copy success
+  };
 
   const handleRetry = async () => {
-    await checkSetup()
+    await checkSetup();
     if (report?.ready && onRetry) {
-      onRetry()
+      onRetry();
     }
-  }
+  };
 
   if (isChecking) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-zinc-900 rounded-xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 border-4 border-zinc-900 dark:border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Database setup controleren...</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Database setup controleren...
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   if (report?.ready) {
@@ -47,9 +48,15 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-zinc-900 rounded-xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-950 rounded-full flex items-center justify-center mx-auto mb-4">
-            <iconify-icon icon="lucide:check-circle" width="32" className="text-emerald-600 dark:text-emerald-400" />
+            <iconify-icon
+              icon="lucide:check-circle"
+              width="32"
+              className="text-emerald-600 dark:text-emerald-400"
+            />
           </div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Database is Klaar!</h2>
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+            Database is Klaar!
+          </h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
             Je database is correct ingesteld en klaar voor gebruik.
           </p>
@@ -61,7 +68,7 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -82,20 +89,30 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
               onClick={onClose}
               className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             >
-              <iconify-icon icon="lucide:x" width="20" className="text-zinc-600 dark:text-zinc-400" />
+              <iconify-icon
+                icon="lucide:x"
+                width="20"
+                className="text-zinc-600 dark:text-zinc-400"
+              />
             </button>
           )}
         </div>
 
         {/* Status Overview */}
         <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-3">Status Overzicht</h3>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-3">
+            Status Overzicht
+          </h3>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-600 dark:text-zinc-400">Supabase Geconfigureerd</span>
+              <span className="text-zinc-600 dark:text-zinc-400">
+                Supabase Geconfigureerd
+              </span>
               <span>
                 {report?.supabaseConfigured ? (
-                  <span className="text-emerald-600 dark:text-emerald-400">✅</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    ✅
+                  </span>
                 ) : (
                   <span className="text-rose-600 dark:text-rose-400">❌</span>
                 )}
@@ -105,37 +122,51 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
               <span className="text-zinc-600 dark:text-zinc-400">Ingelogd</span>
               <span>
                 {report?.authenticated ? (
-                  <span className="text-emerald-600 dark:text-emerald-400">✅</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    ✅
+                  </span>
                 ) : (
                   <span className="text-amber-600 dark:text-amber-400">⚠️</span>
                 )}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-600 dark:text-zinc-400">Transactions Tabel</span>
+              <span className="text-zinc-600 dark:text-zinc-400">
+                Transactions Tabel
+              </span>
               <span>
                 {report?.tables?.transactions?.exists ? (
-                  <span className="text-emerald-600 dark:text-emerald-400">✅</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    ✅
+                  </span>
                 ) : (
                   <span className="text-rose-600 dark:text-rose-400">❌</span>
                 )}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-600 dark:text-zinc-400">Work Days Tabel</span>
+              <span className="text-zinc-600 dark:text-zinc-400">
+                Work Days Tabel
+              </span>
               <span>
                 {report?.tables?.work_days?.exists ? (
-                  <span className="text-emerald-600 dark:text-emerald-400">✅</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    ✅
+                  </span>
                 ) : (
                   <span className="text-rose-600 dark:text-rose-400">❌</span>
                 )}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-600 dark:text-zinc-400">Categories Tabel</span>
+              <span className="text-zinc-600 dark:text-zinc-400">
+                Categories Tabel
+              </span>
               <span>
                 {report?.tables?.categories?.exists ? (
-                  <span className="text-emerald-600 dark:text-emerald-400">✅</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    ✅
+                  </span>
                 ) : (
                   <span className="text-rose-600 dark:text-rose-400">❌</span>
                 )}
@@ -150,7 +181,9 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-blue-100 dark:bg-blue-950 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">1</span>
+                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                  1
+                </span>
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-zinc-900 dark:text-white mb-1">
@@ -176,17 +209,25 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-purple-100 dark:bg-purple-950 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-purple-600 dark:text-purple-400">2</span>
+                <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                  2
+                </span>
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-zinc-900 dark:text-white mb-1">
                   Kopieer Schema Script
                 </h4>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
-                  Open het bestand <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-xs">Money-Pilot/supabase/schema.sql</code> en kopieer de inhoud
+                  Open het bestand{" "}
+                  <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-xs">
+                    Money-Pilot/supabase/schema.sql
+                  </code>{" "}
+                  en kopieer de inhoud
                 </p>
                 <div className="bg-zinc-800 dark:bg-zinc-950 rounded-md p-3 text-xs font-mono text-zinc-300 mb-2 overflow-x-auto">
-                  <div className="text-zinc-500 mb-1">-- Enable UUID extension</div>
+                  <div className="text-zinc-500 mb-1">
+                    -- Enable UUID extension
+                  </div>
                   <div>CREATE EXTENSION IF NOT EXISTS "uuid-ossp";</div>
                   <div className="text-zinc-500 mt-2">-- Create tables...</div>
                   <div className="text-zinc-600">...</div>
@@ -202,19 +243,27 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-950 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">3</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                  3
+                </span>
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-zinc-900 dark:text-white mb-1">
                   Voer Script Uit
                 </h4>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-                  Plak het script in de SQL Editor en klik op "Run" (of druk Ctrl+Enter)
+                  Plak het script in de SQL Editor en klik op "Run" (of druk
+                  Ctrl+Enter)
                 </p>
                 <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-2">
-                  <iconify-icon icon="lucide:info" width="16" className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <iconify-icon
+                    icon="lucide:info"
+                    width="16"
+                    className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                  />
                   <p className="text-xs text-amber-700 dark:text-amber-400">
-                    Dit maakt alle benodigde tabellen, indexen, en security policies aan
+                    Dit maakt alle benodigde tabellen, indexen, en security
+                    policies aan
                   </p>
                 </div>
               </div>
@@ -225,14 +274,17 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-gold-100 dark:bg-gold-950 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-gold-600 dark:text-gold-400">4</span>
+                <span className="text-sm font-bold text-gold-600 dark:text-gold-400">
+                  4
+                </span>
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-zinc-900 dark:text-white mb-1">
                   Controleer Setup
                 </h4>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
-                  Klik op "Setup Controleren" om te verifiëren dat alles correct is ingesteld
+                  Klik op "Setup Controleren" om te verifiëren dat alles correct
+                  is ingesteld
                 </p>
               </div>
             </div>
@@ -243,13 +295,18 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
         {report && !report.ready && (
           <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 rounded-lg p-4 mb-6">
             <div className="flex items-start gap-2">
-              <iconify-icon icon="lucide:alert-circle" width="18" className="text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+              <iconify-icon
+                icon="lucide:alert-circle"
+                width="18"
+                className="text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5"
+              />
               <div>
                 <h4 className="text-sm font-semibold text-rose-900 dark:text-rose-200 mb-1">
                   Setup Niet Compleet
                 </h4>
                 <p className="text-xs text-rose-700 dark:text-rose-400">
-                  {!report.supabaseConfigured && "Supabase is niet geconfigureerd. "}
+                  {!report.supabaseConfigured &&
+                    "Supabase is niet geconfigureerd. "}
                   {!report.allTablesExist && "Database tabellen ontbreken. "}
                   {!report.authenticated && "Je bent niet ingelogd. "}
                 </p>
@@ -303,7 +360,7 @@ const DatabaseSetupGuide = ({ onClose, onRetry }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default DatabaseSetupGuide
+export default DatabaseSetupGuide;
