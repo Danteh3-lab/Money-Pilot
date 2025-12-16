@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import useStore from "../../store/useStore";
 import { format } from "date-fns";
 import { auth, db } from "../../lib/supabase";
@@ -13,6 +14,9 @@ const Header = ({ title = "Overzicht" }) => {
     clearDateRange,
     clearUser,
   } = useStore();
+
+  const location = useLocation();
+  const isTransactionsPage = location.pathname === "/transactions";
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -292,11 +296,13 @@ const Header = ({ title = "Overzicht" }) => {
         </button>
 
         {/* New Transaction Button */}
-        <button className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-military-950 bg-gold-gradient hover:shadow-lg shadow-sm transition-all rounded-md font-semibold">
-          <iconify-icon icon="lucide:plus" width="14" />
-          <span className="hidden sm:inline">Nieuwe Transactie</span>
-          <span className="sm:hidden">Nieuw</span>
-        </button>
+        {!isTransactionsPage && (
+          <button className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-military-950 bg-gold-gradient hover:shadow-lg shadow-sm transition-all rounded-md font-semibold">
+            <iconify-icon icon="lucide:plus" width="14" />
+            <span className="hidden sm:inline">Nieuwe Transactie</span>
+            <span className="sm:hidden">Nieuw</span>
+          </button>
+        )}
       </div>
     </header>
   );
