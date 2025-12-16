@@ -212,11 +212,6 @@ const Transactions = () => {
     }
   };
 
-  const handleAddNew = () => {
-    setEditingTransaction(null);
-    setShowModal(true);
-  };
-
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction);
     setShowModal(true);
@@ -272,15 +267,6 @@ const Transactions = () => {
           >
             <iconify-icon icon="lucide:download" width="16" />
             Export
-          </button>
-
-          <button
-            type="button"
-            className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors shadow-sm flex items-center justify-center gap-2"
-            onClick={handleAddNew}
-          >
-            <iconify-icon icon="lucide:plus" width="16" />
-            Nieuwe Transactie
           </button>
         </div>
       </div>
