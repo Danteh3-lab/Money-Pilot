@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import useStore from "../store/useStore";
+import { db } from "../lib/supabase";
+import TransactionFormModal from "../components/transactions/TransactionFormModal";
 
 /**
  * Transactions Page (UI + functional client-side filters)
@@ -18,10 +20,16 @@ const Transactions = () => {
     toggleTransactionSelection,
     clearTransactionSelection,
     removeTransactions,
+    setTransactions,
+    user,
   } = useStore();
 
   // UI state
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [typeFilter, setTypeFilter] = useState("all"); // all | income | expense
   const [categoryFilter, setCategoryFilter] = useState("all"); // category name or "all"
   const [minAmount, setMinAmount] = useState("");
@@ -31,6 +39,26 @@ const Transactions = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+
+  // Load transactions on mount
+  useEffect(() => {
+    const loadTransactions = async () => {
+      if (!user) return;
+
+      setIsLoading(true);
+      try {
+        const data = await db.getTransactions(user.id);
+        setTransactions(data || []);
+      } catch (error) {
+        console.error("Error loading transactions:", error);
+        alert("Fout bij laden van transacties. Probeer opnieuw.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTransactions();
+  }, [user, setTransactions]);
 
   const normalizedCategories = useMemo(() => {
     if (Array.isArray(categories) && categories.length > 0) return categories;
@@ -164,10 +192,39 @@ const Transactions = () => {
     );
     if (!ok) return;
 
-    // UI-only delete (keeps parity with existing store action).
-    // If you want to delete in Supabase too, we can wire `db.deleteTransactions` here.
-    removeTransactions(selectedTransactions);
-    clearTransactionSelection();
+    setIsDeleting(true);
+    try {
+      // Delete from Supabase
+      await db.deleteTransactions(selectedTransactions);
+
+      // Update store
+      removeTransactions(selectedTransactions);
+      clearTransactionSelection();
+
+      alert(
+        `${selectedTransactions.length} transactie(s) succesvol verwijderd.`,
+      );
+    } catch (error) {
+      console.error("Error deleting transactions:", error);
+      alert("Fout bij verwijderen. Probeer opnieuw.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleAddNew = () => {
+    setEditingTransaction(null);
+    setShowModal(true);
+  };
+
+  const handleEdit = (transaction) => {
+    setEditingTransaction(transaction);
+    setShowModal(true);
+  };
+
+  const handleModalSuccess = () => {
+    // Optionally reload or just let the store update handle it
+    // For now, the modal already updates the store
   };
 
   const pillClass = (type) => {
@@ -176,6 +233,20 @@ const Transactions = () => {
     }
     return "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700";
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-zinc-200 dark:border-zinc-700 border-t-zinc-900 dark:border-t-white rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Transacties laden...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -206,10 +277,7 @@ const Transactions = () => {
           <button
             type="button"
             className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors shadow-sm flex items-center justify-center gap-2"
-            onClick={() => {
-              // Placeholder: wire to existing modal/route later
-              alert("Nieuwe transactie komt binnenkort.");
-            }}
+            onClick={handleAddNew}
           >
             <iconify-icon icon="lucide:plus" width="16" />
             Nieuwe Transactie
@@ -431,10 +499,11 @@ const Transactions = () => {
             <button
               type="button"
               onClick={handleBulkDelete}
-              className="px-3 py-2 text-sm font-medium rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-all flex items-center gap-2"
+              disabled={isDeleting}
+              className="px-3 py-2 text-sm font-medium rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <iconify-icon icon="lucide:trash-2" width="16" />
-              Verwijderen
+              {isDeleting ? "Verwijderen..." : "Verwijderen"}
             </button>
           </div>
         </div>
@@ -500,9 +569,13 @@ const Transactions = () => {
                 pageItems.map((t) => (
                   <tr
                     key={t.id}
-                    className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
+                    className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer"
+                    onClick={() => handleEdit(t)}
                   >
-                    <td className="px-6 py-3">
+                    <td
+                      className="px-6 py-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <input
                         type="checkbox"
                         checked={selectedTransactions.includes(t.id)}
@@ -574,9 +647,20 @@ const Transactions = () => {
       {/* Small footer hint */}
       <p className="text-xs text-zinc-400 dark:text-zinc-600">
         Tip: Deze pagina filtert de transacties die al geladen zijn. Als je
-        “alles ooit” wilt zien met snelle performance, kunnen we server-side
+        "alles ooit" wilt zien met snelle performance, kunnen we server-side
         filtering + pagination toevoegen.
       </p>
+
+      {/* Transaction Form Modal */}
+      <TransactionFormModal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+          setEditingTransaction(null);
+        }}
+        onSuccess={handleModalSuccess}
+        transaction={editingTransaction}
+      />
     </div>
   );
 };
